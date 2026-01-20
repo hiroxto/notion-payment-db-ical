@@ -1,9 +1,119 @@
 import { Hono } from "hono";
+import { Client } from "@notionhq/client";
+import { z } from "zod";
+import ical from "ical-generator";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
+const formatableTextScheme = z.array(
+  z.object({
+    type: z.string(),
+    text: z.object({
+      content: z.string(),
+      link: z
+        .object({
+          url: z.url(),
+        })
+        .nullable(),
+    }),
+    plain_text: z.string(),
+    href: z.url().nullable(),
+  }),
+);
+const paymentDbScheme = z.object({
+  object: z.string(),
+  results: z.array(
+    z.object({
+      id: z.string(),
+      properties: z.object({
+        "Campaign Name": z.object({
+          title: formatableTextScheme,
+        }),
+        Description: z.object({
+          rich_text: formatableTextScheme,
+        }),
+        Date: z.object({
+          formula: z.object({
+            date: z.object({
+              start: z.string(),
+              end: z.string().nullable(),
+            }),
+          }),
+        }),
+      }),
+      url: z.url(),
+    }),
+  ),
+});
 
-app.get("/message", c => {
-  return c.text("Hello Hono!");
+app.get("/:data_source_id/ical", async c => {
+  const notion = new Client({
+    auth: c.env.NOTION_AUTH,
+    notionVersion: "2025-09-03",
+    fetch: (url, options) => fetch(url, options),
+  });
+
+  const response = await notion.dataSources.query({
+    data_source_id: c.req.param("data_source_id"),
+    filter: {
+      or: [
+        {
+          property: "Status",
+          formula: {
+            string: {
+              equals: "開始前",
+            },
+          },
+        },
+        {
+          property: "Status",
+          formula: {
+            string: {
+              equals: "期間内",
+            },
+          },
+        },
+      ],
+    },
+    sorts: [
+      {
+        property: "Date",
+        direction: "ascending",
+      },
+    ],
+  });
+
+  const results = paymentDbScheme.parse(response);
+  const calendar = ical({ name: "還元系カレンダー", timezone: "Asia/Tokyo" });
+
+  for (const result of results.results) {
+    const campaignName = result.properties["Campaign Name"].title.map(t => t.plain_text).join("");
+    const descriptionText = result.properties.Description.rich_text.map(t => t.plain_text).join("");
+
+    const event = {
+      id: result.id,
+      start: new Date(result.properties.Date.formula.date.start),
+      summary: campaignName,
+      description: `${descriptionText}\n${result.url}`,
+    };
+    const endDate = result.properties.Date.formula.date.end;
+    if (endDate) {
+      calendar.createEvent({
+        ...event,
+        end: new Date(endDate),
+      });
+    } else {
+      calendar.createEvent({
+        ...event,
+        allDay: true,
+      });
+    }
+  }
+
+  return new Response(calendar.toString(), {
+    headers: {
+      "Content-Type": "text/calendar; charset=utf-8",
+    },
+  });
 });
 
 export default app;
