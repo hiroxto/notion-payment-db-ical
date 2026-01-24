@@ -1,7 +1,7 @@
-import { Hono, MiddlewareHandler } from "hono";
 import { Client } from "@notionhq/client";
+import { Hono, type MiddlewareHandler } from "hono";
+import ical, { ICalEventData } from "ical-generator";
 import { z } from "zod";
-import ical from "ical-generator";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -98,24 +98,21 @@ app.get("/:data_source_id/ical", authMiddleware, async c => {
     const campaignName = result.properties["Campaign Name"].title.map(t => t.plain_text).join("");
     const descriptionText = result.properties.Description.rich_text.map(t => t.plain_text).join("");
 
-    const event = {
+    const eventDetails: ICalEventData = {
       id: result.id,
       start: new Date(result.properties.Date.formula.date.start),
       summary: campaignName,
       description: `${descriptionText}\n${result.url}`,
+      allDay: true,
     };
-    const endDate = result.properties.Date.formula.date.end;
-    if (endDate) {
-      calendar.createEvent({
-        ...event,
-        end: new Date(endDate),
-      });
-    } else {
-      calendar.createEvent({
-        ...event,
-        allDay: true,
-      });
+
+    const endDateString = result.properties.Date.formula.date.end;
+    if (endDateString) {
+      const end = new Date(endDateString);
+      end.setDate(end.getDate() + 1); // Add one day for all-day events
+      eventDetails.end = end;
     }
+    calendar.createEvent(eventDetails);
   }
 
   return new Response(calendar.toString(), {
