@@ -1,21 +1,24 @@
+# notion-payment-db-ical
+
+Notion の還元系カレンダー DB を iCal にして Google カレンダーなどで見られるようにする Cloudflare Workers。
+
+
+## セットアップ
+
+.dev.vars.example を .dev.vars としてコピーしてキーを設定する。
+
 ```txt
+cp .dev.vars.example .dev.vars
 npm install
 npm run dev
 ```
 
-```txt
-npm run deploy
-```
-
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
+## worker-configuration.d.ts の生成
 
 ```txt
 npm run cf-typegen
 ```
 
-Pass the `CloudflareBindings` as generics when instantiation `Hono`:
+## License
 
-```ts
-// src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>()
-```
+MIT License
