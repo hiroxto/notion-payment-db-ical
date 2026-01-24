@@ -1,6 +1,6 @@
 import { Client } from "@notionhq/client";
 import { Hono, type MiddlewareHandler } from "hono";
-import ical, { type ICalEventData } from "ical-generator";
+import ical, { type ICalEventData, ICalEventTransparency } from "ical-generator";
 import { z } from "zod";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
@@ -109,6 +109,7 @@ app.get("/:data_source_id/ical", authMiddleware, async c => {
       summary: campaignName,
       description: `${descriptionText}\n${result.url}`,
       allDay: true,
+      transparency: ICalEventTransparency.TRANSPARENT,
     };
 
     const endDateString = result.properties.Date.formula.date.end;
