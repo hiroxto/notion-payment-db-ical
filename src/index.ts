@@ -1,6 +1,6 @@
 import { Client } from "@notionhq/client";
 import { Hono, type MiddlewareHandler } from "hono";
-import ical, { ICalEventData } from "ical-generator";
+import ical, { type ICalEventData } from "ical-generator";
 import { z } from "zod";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
