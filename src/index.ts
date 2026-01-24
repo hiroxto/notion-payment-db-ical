@@ -127,4 +127,12 @@ app.get("/:data_source_id/ical", authMiddleware, async c => {
   });
 });
 
+app.all("/", async c => {
+  return c.text("Not found", 404);
+});
+
+app.all("/*", async c => {
+  return c.text("Not found", 404);
+});
+
 export default app;
