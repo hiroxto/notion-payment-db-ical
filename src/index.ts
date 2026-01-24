@@ -92,7 +92,12 @@ app.get("/:data_source_id/ical", authMiddleware, async c => {
   });
 
   const results = paymentDbScheme.parse(response);
-  const calendar = ical({ name: "還元系カレンダー", timezone: "Asia/Tokyo" });
+  const calendar = ical({
+    name: "還元系カレンダー",
+    description: "Notionの還元系カレンダーをiCalに変換したカレンダー",
+    timezone: "Asia/Tokyo",
+    ttl: 60 * 60 * 6, // 6 hours
+  });
 
   for (const result of results.results) {
     const campaignName = result.properties["Campaign Name"].title.map(t => t.plain_text).join("");
