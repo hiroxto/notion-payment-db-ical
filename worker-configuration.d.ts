@@ -10,7 +10,8 @@ declare namespace Cloudflare {
 	}
 }
 interface CloudflareBindings extends Cloudflare.Env {
-  NOTION_AUTH: string
+  NOTION_AUTH: string;
+  AUTH_KEY: string;
 }
 
 // Begin runtime types

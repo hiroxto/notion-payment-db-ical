@@ -1,9 +1,18 @@
-import { Hono } from "hono";
+import { Hono, MiddlewareHandler } from "hono";
 import { Client } from "@notionhq/client";
 import { z } from "zod";
 import ical from "ical-generator";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
+
+const authMiddleware: MiddlewareHandler<{ Bindings: CloudflareBindings }> = async (c, next) => {
+  const apiKey = c.req.query("sk");
+  if (apiKey !== c.env.AUTH_KEY) {
+    return c.text("Unauthorized", 401);
+  }
+  await next();
+};
+
 const formatableTextScheme = z.array(
   z.object({
     type: z.string(),
@@ -45,7 +54,7 @@ const paymentDbScheme = z.object({
   ),
 });
 
-app.get("/:data_source_id/ical", async c => {
+app.get("/:data_source_id/ical", authMiddleware, async c => {
   const notion = new Client({
     auth: c.env.NOTION_AUTH,
     notionVersion: "2025-09-03",
