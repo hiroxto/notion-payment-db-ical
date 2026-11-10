@@ -31,6 +31,11 @@
             "lineWidth": 120
         }
     },
+    "markdown": {
+        "formatter": {
+            "enabled": false
+        }
+    },
     "json": {
         "formatter": {
             "indentWidth": 4,
