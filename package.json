@@ -1,7 +1,7 @@
 {
     "name": "notion-payment-db-ical",
     "type": "module",
-    "packageManager": "npm@11.20.0",
+    "packageManager": "npm@12.2.2",
     "scripts": {
         "dev": "wrangler dev",
         "deploy": "wrangler deploy --minify",
