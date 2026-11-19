@@ -10,7 +10,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # 既定のキャッシュキーはmise.tomlのハッシュのみで、idiomatic_version_file_enable_toolsで読む.node-version（Node.js）とpackage.json（npm）のバージョンが変わっても古いキャッシュが使われるため、両ファイルのハッシュをキーに加える
+      # Renovateがmise.lockの更新に対応していないため、mise.lockは使わずにキャッシュキーでバージョンの変更を反映する
       - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+        with:
+          cache_key: "{{default}}-${{ hashFiles('.node-version', 'package.json') }}"
 
       - run: npm ci
 
